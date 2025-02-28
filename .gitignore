@@ -1,0 +1,15 @@
+# Ignore node_modules (dependencies)
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Ignore environment files (security)
+backend/.env
+frontend/.env
+
+# Ignore build files
+backend/dist/
+frontend/dist/
+
+# Ignore logs and cache
+*.log
