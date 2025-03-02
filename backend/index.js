@@ -5,13 +5,18 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
-const path = require('path');
 const cloudinary = require('cloudinary').v2;
 
 // Load environment variables
 dotenv.config({ path: './.env' });
 
-// Debugging: Check if MONGO_URI is loaded correctly
+// Ensure required environment variables are set
+if (!process.env.MONGO_URI || !process.env.CLOUD_NAME || !process.env.CLOUD_API_KEY || !process.env.CLOUD_API_SECRET) {
+  console.error("❌ Missing environment variables. Check your .env file.");
+  process.exit(1);
+}
+
+// Debugging: Check if MongoDB URI is loaded correctly
 console.log("MongoDB URI:", process.env.MONGO_URI);
 
 // Cloudinary configuration
@@ -24,9 +29,6 @@ cloudinary.config({
 // MongoDB connection
 const connectDB = async () => {
   try {
-    if (!process.env.MONGO_URI) {
-      throw new Error("MONGO_URI is undefined. Check your .env file.");
-    }
     await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -34,16 +36,25 @@ const connectDB = async () => {
     console.log('✅ Database is connected successfully!');
   } catch (err) {
     console.error('❌ Database connection error:', err);
-    process.exit(1); // Exit the process if DB connection fails
+    process.exit(1); // Exit if DB connection fails
   }
 };
 
 // Middleware setup
 app.use(cookieParser());
 app.use(express.json());
+
+// 🔹 Fix CORS issue: Allow both local and deployed frontend
+const allowedOrigins = [
+  "http://localhost:5173", // Local frontend
+  "https://blog-website-git-main-shashisharans-projects.vercel.app" // Deployed frontend on Vercel
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: allowedOrigins,
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 // Routes
@@ -56,17 +67,24 @@ app.use('/api/comments', require('./routes/comments'));
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// Cloudinary image upload route
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No image provided!' });
   }
 
-  cloudinary.uploader.upload_stream({ folder: 'blog_images' }, (error, result) => {
-    if (error) {
-      return res.status(500).json({ message: 'Cloudinary upload failed', error });
+  const uploadStream = cloudinary.uploader.upload_stream(
+    { folder: 'blog_images' },
+    (error, result) => {
+      if (error) {
+        console.error("❌ Cloudinary Upload Error:", error);
+        return res.status(500).json({ message: 'Cloudinary upload failed', error });
+      }
+      res.status(200).json({ url: result.secure_url });
     }
-    res.status(200).json({ url: result.secure_url });
-  }).end(req.file.buffer); 
+  );
+
+  uploadStream.end(req.file.buffer); 
 });
 
 // Start the server
