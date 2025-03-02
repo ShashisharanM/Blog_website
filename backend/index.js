@@ -36,7 +36,7 @@ const connectDB = async () => {
     console.log('✅ Database is connected successfully!');
   } catch (err) {
     console.error('❌ Database connection error:', err);
-    process.exit(1); // Exit if DB connection fails
+    process.exit(1);
   }
 };
 
@@ -44,18 +44,31 @@ const connectDB = async () => {
 app.use(cookieParser());
 app.use(express.json());
 
-// 🔹 Fix CORS issue: Allow both local and deployed frontend
+// 🔹 Fix CORS: Allow frontend origin
 const allowedOrigins = [
   "http://localhost:5173", // Local frontend
-  "https://blog-website-git-main-shashisharans-projects.vercel.app" // Deployed frontend on Vercel
+  "https://blog-website-shashisharans-projects.vercel.app" // Deployed frontend on Vercel
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+// ✅ Manually set CORS headers for all responses
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  next();
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
