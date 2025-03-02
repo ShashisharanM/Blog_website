@@ -11,12 +11,7 @@ const cloudinary = require("cloudinary").v2;
 dotenv.config({ path: "./.env" });
 
 // Ensure required environment variables are set
-if (
-  !process.env.MONGO_URI ||
-  !process.env.CLOUD_NAME ||
-  !process.env.CLOUD_API_KEY ||
-  !process.env.CLOUD_API_SECRET
-) {
+if (!process.env.MONGO_URI || !process.env.CLOUD_NAME || !process.env.CLOUD_API_KEY || !process.env.CLOUD_API_SECRET) {
   console.error("❌ Missing environment variables. Check your .env file.");
   process.exit(1);
 }
@@ -49,22 +44,21 @@ const connectDB = async () => {
 app.use(cookieParser());
 app.use(express.json());
 
-// 🔹 Fix CORS: Allow frontend origin & handle preflight requests
+// 🔹 Fix CORS: Allow frontend origin & credentials
 const allowedOrigins = [
   "http://localhost:5173", // Local frontend
   "https://blog-website-shashisharans-projects.vercel.app", // Deployed frontend
-  "https://blog-website-git-main-shashisharans-projects.vercel.app", // Vercel preview
+  "https://blog-website-a1s3oz8nn-shashisharans-projects.vercel.app", // Vercel preview
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      console.log("🔍 Incoming Request Origin:", origin); // Debugging
-
+      console.log("🔍 Incoming Request Origin:", origin);
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.error("❌ CORS Error: Not allowed", origin);
+        console.error("❌ Blocked by CORS:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -74,7 +68,7 @@ app.use(
   })
 );
 
-// Allow preflight requests
+// ✅ Allow preflight requests
 app.options("*", cors());
 
 // Routes
