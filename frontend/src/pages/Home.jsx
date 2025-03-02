@@ -2,7 +2,7 @@ import axios from "axios"
 import Footer from "../components/Footer"
 import HomePosts from "../components/HomePosts"
 import Navbar from "../components/Navbar"
-import { IF, URL } from "../url"
+import { URL } from "../url"
 import { useContext, useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import Loader from '../components/Loader'
