@@ -47,7 +47,8 @@ app.use(express.json());
 // 🔹 Fix CORS: Allow frontend origin
 const allowedOrigins = [
   "http://localhost:5173", // Local frontend
-  "https://blog-website-shashisharans-projects.vercel.app" // Deployed frontend on Vercel
+  "https://blog-website-shashisharans-projects.vercel.app", // Deployed frontend
+  "https://blog-website-git-main-shashisharans-projects.vercel.app" // Vercel preview
 ];
 
 app.use(cors({
@@ -65,8 +66,13 @@ app.use(cors({
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
   next();
 });
 
