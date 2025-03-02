@@ -51,25 +51,26 @@ const allowedOrigins = [
   "https://blog-website-a1s3oz8nn-shashisharans-projects.vercel.app", // Vercel preview
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      console.log("🔍 Incoming Request Origin:", origin);
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.error("❌ Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: "GET, POST, PUT, DELETE, OPTIONS",
-    allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-  })
-);
+// CORS Middleware with better debugging
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  console.log("🔍 Incoming Request Origin:", origin || "🚫 No Origin (Non-Browser Request)");
 
-// ✅ Allow preflight requests
-app.options("*", cors());
+  // Allow requests with no origin (like Postman)
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  }
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
